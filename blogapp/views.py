@@ -1,18 +1,20 @@
 from django.shortcuts import render
-from rest_framework.generics import ListAPIView,RetrieveAPIView,RetrieveUpdateAPIView,CreateAPIView
+from rest_framework.generics import ListAPIView,RetrieveAPIView,RetrieveUpdateAPIView,CreateAPIView,DestroyAPIView
 from blogapp.models import Post
-from blogapp.serializers import PostSerializer,PostCreateSerializer,LoginSerializer,RegistrationSerializer
+from blogapp.serializers import PostSerializer, PostCreateUpdateSerializer,LoginSerializer,RegistrationSerializer
 
 from rest_framework.generics import GenericAPIView
-from django.contrib.auth import login as django_login, logout as django_logout
+from django.contrib.auth import login as django_login
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.views import APIView
 from django.contrib.auth import login as django_login
 from rest_framework.views import APIView
 #from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAdminUser,IsAuthenticatedOrReadOnly,AllowAny
 from rest_framework.authtoken.models import Token
-from rest_framework.authentication import TokenAuthentication
+
 from .permissions import IsOwnerOrReadOnly
 
 
@@ -22,7 +24,7 @@ from rest_framework.response import Response
 # Create your views here.
 
 
-
+User = get_user_model()
 class RegisterAPIView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegistrationSerializer
@@ -33,7 +35,7 @@ class RegisterListAPIView(ListAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = [AllowAny]
 
-class LoginView(GenericAPIView):
+class LoginAPIView(APIView):
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
 
@@ -45,23 +47,23 @@ class LoginView(GenericAPIView):
         django_login(request, user)
         token, created = Token.objects.get_or_create(user=user)
         return Response({"token": token.key}, status=200)
+    
 
-
-class LogoutView(APIView):
+"""class LogoutView(APIView):
     authentication_classes = (TokenAuthentication, )
 
     def post(self, request):
         django_logout(request)
-        return Response(status=204)
+        return Response(status=204)"""
 
 class PostCreateAPIView(CreateAPIView):
     queryset = Post.objects.all()
-    serializer_class = PostCreateSerializer
+    serializer_class =  PostCreateUpdateSerializer
     permission_classes = [IsAuthenticated]
 
-
     def post_create(self,serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(user=self.request.user)
+
    
 class PostListAPIView(ListAPIView):
     queryset = Post.objects.all()
@@ -76,69 +78,15 @@ class PostDetailAPIView(RetrieveAPIView):
 
 class PostUpdateAPIView(RetrieveUpdateAPIView):
     queryset = Post.objects.all()
-    serializer_class = PostCreateSerializer
+    serializer_class = PostCreateUpdateSerializer
     permission_classes = [IsOwnerOrReadOnly]
     def post_update(self,serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(user=self.request.user)
 
+
+class PostDeleteAPIView(DestroyAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsOwnerOrReadOnly]
 
     
-    
-"""class PostViewSet(viewsets.ViewSet):
-    
-
-    def list(self,request):
-        post=Post.objects.all()
-        serializer=PostSerializer(post,many=True,context={"request":request})
-        response_dict={"error":False,"message":"All  List Data","data":serializer.data}
-        return Response(response_dict)
-
-    def create(self,request):
-        try:
-            serializer=PostSerliazer(data=request.data,context={"request":request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            dict_response={"error":False,"message":"Blog Data Save Successfully"}
-        except:
-            dict_response={"error":True,"message":"Error During Saving Company Data"}
-        return Response(dict_response)
-
-    def retrieve(self, request, pk=None):
-        queryset = Company.objects.all()
-        company = get_object_or_404(queryset, pk=pk)
-        serializer = PostSerliazer(post, context={"request": request})
-
-        serializer_data = serializer.data
-        # Accessing All the Medicine Details of Current Medicine ID
-        
-
-        return Response({"error": False, "message": "Single Data Fetch", "data": serializer_data})
-
-    def update(self,request,pk=None):
-        try:
-            queryset=post.objects.all()
-            post=get_object_or_404(queryset,pk=pk)
-            serializer=postSerliazer(post,data=request.data,context={"request":request})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            dict_response={"error":False,"message":"Successfully Updated Company Data"}
-        except:
-            dict_response={"error":True,"message":"Error During Updating Company Data"}
-
-        return Response(dict_response)
-
-post_list=PostViewSet.as_view({"get":"list"})
-post_create=PostViewSet.as_view({"post":"create"})
-post_update=PostViewSet.as_view({"put":"update"})"""
-
-
-"""class LoginView(GenericAPIView):
-    serializer_class = LoginSerializer
-    
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        django_login(request, user)
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key}, status=200)"""

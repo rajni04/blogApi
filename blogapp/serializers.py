@@ -1,8 +1,27 @@
 from rest_framework import serializers
 from rest_framework import exceptions
 from blogapp.models import Post
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
 from django.contrib.auth import authenticate
+from rest_framework.serializers import SerializerMethodField
+    
+from rest_framework.serializers import (
+    CharField)
+
+    
+
+User = get_user_model()
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'email',
+            
+        ]
 
 
 
@@ -17,6 +36,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
 		extra_kwargs = {
 				'password': {'write_only': True},
 		}	
+
+    
 
 
 	def	save(self):
@@ -33,9 +54,22 @@ class RegistrationSerializer(serializers.ModelSerializer):
 		user.save()
 		return user
 
+
+
+     
+
 class LoginSerializer(serializers.Serializer):
+    token = CharField(allow_blank=True, read_only=True)
     username = serializers.CharField()
     password = serializers.CharField()
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'password',
+            'token',
+            
+        ]
 
     def validate(self, data):
         username = data.get("username", "")
@@ -57,22 +91,24 @@ class LoginSerializer(serializers.Serializer):
             raise exceptions.ValidationError(msg)
         return data
 
-class PostCreateSerializer(serializers.ModelSerializer):
+class PostCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
             'title',
             'image',
-            
             'content',
             'publish']
 
 class PostSerializer(serializers.ModelSerializer):
+    user = UserDetailSerializer(read_only=True)
     class Meta:
         model=Post
         fields=[
             'id',
-            'author',
+            'user',
             'title',
             'content',
             'publish']
+    def get_user(self,obj):
+        return str(obj.user.username)
