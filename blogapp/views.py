@@ -26,13 +26,17 @@ from rest_framework.response import Response
 class RegisterAPIView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegistrationSerializer
+    permission_classes = [AllowAny]
 
 class RegisterListAPIView(ListAPIView):
     queryset = User.objects.all()
     serializer_class = RegistrationSerializer
+    permission_classes = [AllowAny]
 
 class LoginView(GenericAPIView):
     serializer_class = LoginSerializer
+    permission_classes = [AllowAny]
+
     
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -53,6 +57,8 @@ class LogoutView(APIView):
 class PostCreateAPIView(CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
+    permission_classes = [IsAuthenticated]
+
 
     def post_create(self,serializer):
         serializer.save(author=self.request.user)
@@ -70,7 +76,7 @@ class PostDetailAPIView(RetrieveAPIView):
 
 class PostUpdateAPIView(RetrieveUpdateAPIView):
     queryset = Post.objects.all()
-    serializer_class = PostSerializer
+    serializer_class = PostCreateSerializer
     permission_classes = [IsOwnerOrReadOnly]
     def post_update(self,serializer):
         serializer.save(author=self.request.user)

@@ -5,13 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
 
-class UsrSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = User
-        fields = ['username', 'first_name',
-                'last_name', 'email','password'
-                ]
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
 
@@ -69,7 +63,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
         fields = [
             'title',
             'image',
-            'author',         
+            
             'content',
             'publish']
 

@@ -14,4 +14,4 @@ class IsOwnerOrReadOnly(BasePermission):
         #member.is_active
         if request.method in SAFE_METHODS:
             return True
-        return obj.user == request.user
+        return obj.author == request.user
